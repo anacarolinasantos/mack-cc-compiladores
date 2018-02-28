@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><!--Created with JFLAP 6.4.--><structure>
+	<type>fa</type>
+	<automaton>
+		<!--The list of states.-->
+		<state id="0" name="q0">
+			<x>360.0</x>
+			<y>265.0</y>
+			<initial/>
+		</state>
+		<state id="1" name="q1">
+			<x>535.0</x>
+			<y>137.0</y>
+			<final/>
+		</state>
+		<state id="2" name="q2">
+			<x>604.0</x>
+			<y>172.0</y>
+			<final/>
+		</state>
+		<state id="3" name="q3">
+			<x>611.0</x>
+			<y>235.0</y>
+			<final/>
+		</state>
+		<state id="4" name="q4">
+			<x>537.0</x>
+			<y>293.0</y>
+			<final/>
+		</state>
+		<state id="5" name="q5">
+			<x>533.0</x>
+			<y>352.0</y>
+			<final/>
+		</state>
+		<state id="6" name="q6">
+			<x>672.0</x>
+			<y>357.0</y>
+			<final/>
+		</state>
+		<state id="7" name="q7">
+			<x>434.0</x>
+			<y>405.0</y>
+			<final/>
+		</state>
+		<state id="8" name="q8">
+			<x>628.0</x>
+			<y>409.0</y>
+			<final/>
+		</state>
+		<state id="9" name="q9">
+			<x>625.0</x>
+			<y>489.0</y>
+			<final/>
+		</state>
+		<state id="10" name="q10">
+			<x>361.0</x>
+			<y>410.0</y>
+			<final/>
+		</state>
+		<state id="11" name="q11">
+			<x>246.0</x>
+			<y>388.0</y>
+			<final/>
+		</state>
+		<state id="12" name="q12">
+			<x>220.0</x>
+			<y>185.0</y>
+		</state>
+		<state id="13" name="q13">
+			<x>101.0</x>
+			<y>179.0</y>
+			<final/>
+		</state>
+		<state id="14" name="q14">
+			<x>326.0</x>
+			<y>464.0</y>
+		</state>
+		<state id="15" name="q15">
+			<x>442.0</x>
+			<y>489.0</y>
+			<final/>
+		</state>
+		<state id="17" name="q17">
+			<x>452.0</x>
+			<y>123.0</y>
+		</state>
+		<state id="18" name="q18">
+			<x>594.0</x>
+			<y>78.0</y>
+		</state>
+		<state id="19" name="q19">
+			<x>724.0</x>
+			<y>72.0</y>
+			<final/>
+		</state>
+		<!--The list of transitions.-->
+		<transition>
+			<from>17</from>
+			<to>18</to>
+			<read>o</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>10</to>
+			<read>=</read>
+		</transition>
+		<transition>
+			<from>18</from>
+			<to>19</to>
+			<read>d</read>
+		</transition>
+		<transition>
+			<from>5</from>
+			<to>6</to>
+			<read>=</read>
+		</transition>
+		<transition>
+			<from>11</from>
+			<to>14</to>
+			<read>x</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>3</to>
+			<read>*</read>
+		</transition>
+		<transition>
+			<from>7</from>
+			<to>9</to>
+			<read>&gt;</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>2</to>
+			<read>-</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>4</to>
+			<read>\</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>5</to>
+			<read>&gt;</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>11</to>
+			<read>e</read>
+		</transition>
+		<transition>
+			<from>7</from>
+			<to>8</to>
+			<read>=</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>12</to>
+			<read>o</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>1</to>
+			<read>+</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>7</to>
+			<read>&lt;</read>
+		</transition>
+		<transition>
+			<from>14</from>
+			<to>15</to>
+			<read>p</read>
+		</transition>
+		<transition>
+			<from>0</from>
+			<to>17</to>
+			<read>m</read>
+		</transition>
+		<transition>
+			<from>12</from>
+			<to>13</to>
+			<read>u</read>
+		</transition>
+	</automaton>
+</structure>
