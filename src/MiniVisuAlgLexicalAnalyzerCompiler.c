@@ -27,7 +27,7 @@ Referência Bibliográfica:
 //INT_MAX
 
 //Constantes de nomes dos arquivos de entrada e saida
-#define ARQENTRADA "teste.txt"
+#define ARQENTRADA "entrada.txt"
 #define ARQSAIDA "saida.txt"
 
 //Estrutura do token que será impresso no arquivo de saida
@@ -69,6 +69,7 @@ void openFile(FILE **file, char fileName[], char type[]) {
 Token* getNumberVariableOrReservedWord(char* splitString){
 	Token *token = (Token *) calloc(255,sizeof(Token));
 	int num, i = 0, isANumber = 0, isAVariable = 0;
+	char idNumber[30];
 
 	//Primeiramente verifica se é um número, caso seja, já retorna o token
 	num = atoi(splitString);
@@ -107,6 +108,7 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 			token->attribute = splitString;
 
 		} else {
+			printf("NAO É UM NUMERO NEM UMA VARIAVEL!!!!!!!!");
 			//TODO: retorna um erro (temos que ver como fazer isso!)
 		}
 		return token;
@@ -185,9 +187,6 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 	} else if (strcmp(splitString, "senao") == 0) {
 		token->classification = "senao";
 		token->attribute = NULL;
-	} else if (strcmp(splitString, "var") == 0) {
-		token->classification = "var";
-		token->attribute = NULL;
 	} else if (strcmp(splitString, "verdadeiro") == 0) {
 		token->classification = "verdadeiro";
 		token->attribute = NULL;
@@ -197,11 +196,16 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 		/* Primeiro verifica se todos os caracteres são aceitos e se é
 		  realmente uma variável*/
 		for (i = 0; i < strlen(splitString); i++) {
-			/* Caracteres vão de XXXX até XXXX, numeros vão de XXXX até XXXX
-			  e underline que é o XXXX na tabela ASCII, portanto, caso seja
-			  algo diferente disso, não é uma variavel válida, então não deve
-			  ser reconhecida!*/
-			//TODO: fazer esta comparção!!
+			/* Caracteres em letra minúscula vão de 97 até 122, numeros
+			  vão de 48 até 57 e underline que é o 95 na tabela ASCII,
+			  portanto, caso seja algo diferente disso, não é uma variavel
+			  válida, então não deve ser reconhecida!*/
+			printf("caracter %d\n", splitString[i]);
+			if ((splitString[i] < 97 || splitString[i] > 122) && (splitString[i] < 48 || splitString[i] > 57) && splitString[i] != 95) {
+				isAVariable = 1;
+				printf("entrou!");
+				break;
+			}
 		}
 
 		if (isAVariable == 0) {
@@ -213,7 +217,13 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 				if (i <= indexVariables) {
 					if (strcmp(variables[i], splitString) == 0) {
 						token->classification = "id";
-						token->attribute = "x";
+
+						/* Função sprintf salva variaveis em uma string! Portanto foi feito o cast
+						  do index da variavel para uma string, pois o atributo do token é uma
+						  string e não um inteiro!*/
+						sprintf(idNumber, "%d", i);
+
+						token->attribute = idNumber;
 						break;
 					}
 				} else {
@@ -221,13 +231,14 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 					strcpy(variables[i], splitString);
 					token->classification = "id";
 
-					//TODO: fazer a transformação de int para string para salvar no attribute
+					sprintf(idNumber, "%d", i);
 
-					token->attribute = "x";
+					token->attribute = idNumber;
 					break;
 				}
 			}
 		} else {
+			printf("NAO É UMA VARIAVEL!!!!!!!!");
 			//TODO: retorna um erro de que não é uma variavel!
 		}
 
@@ -246,8 +257,6 @@ Token* getToken(char* splitString) {
 	  encontrar outras aspas, caso não tenha encontrado, vai retornar o token vazio
 	*/
 	if (isStringLiteral == 1) {
-		printf("É uma string\n");
-
 		if (splitString[0] == '"') {
 			token->classification = "text";
 			token->attribute = NULL;
@@ -402,9 +411,8 @@ void readFile() {
 int main() {
 	int i = 0;
 
-	//TODO: colocar constante de arquivo de entrada e de saida
-	openFile(&source_file, "entrada.txt", "r");
-	openFile(&destination_file, "saida.txt", "w");
+	openFile(&source_file, ARQENTRADA, "r");
+	openFile(&destination_file, ARQSAIDA, "w");
 
 	for (i = 0; i < MAXVARIABLES; i++) {
 		variables[i][0] = '\0';
