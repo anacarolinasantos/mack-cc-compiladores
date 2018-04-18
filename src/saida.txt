@@ -1,0 +1,52 @@
+<algoritmo>
+<text>
+<id, 1>
+<id, 2>
+<ponctuation, COL>
+<inteiro>
+<id, 3>
+<ponctuation, COMMA>
+<id, 4>
+<ponctuation, COL>
+<inteiro>
+<id, 5>
+<id, 3>
+<attribution>
+<number, 0>
+<id, 4>
+<attribution>
+<number, 0>
+<para>
+<id, 3>
+<de>
+<number, -1>
+<ate>
+<number, 120>
+<passo>
+<number, 1>
+<faca>
+<escreva>
+<ponctuation, OP>
+<id, 3>
+<ponctuation, CP>
+<leia>
+<ponctuation, OP>
+<id, 2>
+<ponctuation, CP>
+<se>
+<id, 2>
+<rel-op, GT>
+<number, 500>
+<entao>
+<id, 6>
+<attribution>
+<id, 4>
+<arith-op, PLUS>
+<number, 1>
+<fimse>
+<fimpara>
+<escreva>
+<ponctuation, OP>
+<id, 4>
+<ponctuation, CP>
+<fimalgoritmo>

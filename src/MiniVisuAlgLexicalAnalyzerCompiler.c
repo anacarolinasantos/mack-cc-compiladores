@@ -68,7 +68,9 @@ void openFile(FILE **file, char fileName[], char type[]) {
 Token* getNumberVariableOrReservedWord(char* splitString){
 	Token *token = (Token *) calloc(255,sizeof(Token));
 	int num, i = 0, isANumber = 0, isAVariable = 0;
-	char idNumber[30], checkNumber[30];
+
+	char * idNumber = (char *) malloc (31 * sizeof(char));
+	char * checkNumber = (char *) malloc (31 * sizeof(char));
 
 	//Primeiramente verifica se é um número, caso seja, já retorna o token
 	num = atoi(splitString);

@@ -1,18 +1,18 @@
-algoritmo "salario"
-// Seção de Declarações
-var sal:real
-i,contador:inteiro
+algoritmo " salario "
+// Seção    de Declarações
+var sal : inteiro
+i , contador : inteiro
 
-inicio
+inicio12
 // Seção de Comandos
-i<-0;
-contador<-0;
-para i de 1 ate 5 passo 1 faca
-   escreva("Digite o salario do funcionário ",i, ": ")
-   leia (sal)
-   se sal>500 entao
-      contador<-contador+1
+i <- 0
+contador <- 0
+para i de -1 ate 120 passo 1 faca
+   escreva ( i )
+   leia ( sal )
+   se sal > 500 entao
+      conta_dor <- contador + 1
    fimse
 fimpara
-escreval(contador, " Funcionários recebem salários superiores a R$ 300,00." )
+escreva ( contador )
 fimalgoritmo
