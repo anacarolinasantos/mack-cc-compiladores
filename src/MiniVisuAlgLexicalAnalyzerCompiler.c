@@ -14,17 +14,16 @@ Referência Bibliográfica:
 	Acesso em: 5 Abril 2018.
  */
 
-//Inclusão das bibliotecas padrão e para limites de inteiros e para lidar com strings
+//Inclusão das bibliotecas padrão, para limites de inteiros e para lidar com strings
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
 
-//Constantes de valores maximos
+//Constantes de valores máximos
 #define MAXBUFFERLENGTH 1000
 #define MAXVARIABLES 1000
 #define MAXVARIABLELENGTH 30
-//INT_MAX
 
 //Constantes de nomes dos arquivos de entrada e saida
 #define ARQENTRADA "entrada.txt"
@@ -43,7 +42,7 @@ static FILE *source_file, *destination_file;
 const size_t bufferSize = MAXBUFFERLENGTH;
 
 //Inicialização de variaveis estáticas que serão utilizadas em diversas funções do código
-static int forward = 0, line = 0, indexVariables = 0;
+static int forward = 0, line = 1, indexVariables = 0;
 
 //Declaração do buffer de entrada
 static char *buffer;
@@ -69,7 +68,7 @@ void openFile(FILE **file, char fileName[], char type[]) {
 Token* getNumberVariableOrReservedWord(char* splitString){
 	Token *token = (Token *) calloc(255,sizeof(Token));
 	int num, i = 0, isANumber = 0, isAVariable = 0;
-	char idNumber[30];
+	char idNumber[30], checkNumber[30];
 
 	//Primeiramente verifica se é um número, caso seja, já retorna o token
 	num = atoi(splitString);
@@ -82,6 +81,14 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 		  (com inteiros e strings misturados). Por este motivo, neste for
 		  abaixo verificamos se todos os caracteres são números de acordo
 		  com a tabela ASCII*/
+		sprintf(checkNumber, "%d", num);
+
+		if (strcmp(splitString, checkNumber) != 0) {
+			fprintf(destination_file, "Error %s at line %d integer out of bounds.", splitString, line);
+			printf("Error %s at line %d integer out of bounds.", splitString, line);
+			exit(1);
+		}
+
 		for (i = 0; i < strlen(splitString); i++) {
 			/* Caso o caracter verificado seja 13 (que é o enter na tabela
 			  ASCII) ou 10 (que é o \n, ou seja, quebra de linha), então nem
@@ -108,8 +115,9 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 			token->attribute = splitString;
 
 		} else {
-			printf("NAO É UM NUMERO NEM UMA VARIAVEL!!!!!!!!");
-			//TODO: retorna um erro (temos que ver como fazer isso!)
+			fprintf(destination_file, "Error symbol %s at line %d could not be resolved", splitString, line);
+			printf("Error symbol %s at line %d could not be resolved", splitString, line);
+			exit(1);
 		}
 		return token;
 	}
@@ -195,15 +203,19 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 	} else {
 		/* Primeiro verifica se todos os caracteres são aceitos e se é
 		  realmente uma variável*/
+		if (strlen(splitString) > 30) {
+			fprintf(destination_file, "Error %s at line %d variables names are too long (maximum length is 30 characters).", splitString, line);
+			printf("Error %s at line %d variables names are too long (maximum length is 30 characters).", splitString, line);
+			exit(1);
+		}
+
 		for (i = 0; i < strlen(splitString); i++) {
 			/* Caracteres em letra minúscula vão de 97 até 122, numeros
 			  vão de 48 até 57 e underline que é o 95 na tabela ASCII,
 			  portanto, caso seja algo diferente disso, não é uma variavel
 			  válida, então não deve ser reconhecida!*/
-			printf("caracter %d\n", splitString[i]);
 			if ((splitString[i] < 97 || splitString[i] > 122) && (splitString[i] < 48 || splitString[i] > 57) && splitString[i] != 95) {
 				isAVariable = 1;
-				printf("entrou!");
 				break;
 			}
 		}
@@ -238,8 +250,9 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 				}
 			}
 		} else {
-			printf("NAO É UMA VARIAVEL!!!!!!!!");
-			//TODO: retorna um erro de que não é uma variavel!
+			fprintf(destination_file, "Error symble %s at line %d could not be resolved", splitString, line);
+			printf("Error symble %s at line %d could not be resolved", splitString, line);
+			exit(1);
 		}
 
 
@@ -364,15 +377,12 @@ void readFile() {
 	while (fgets(buffer, bufferSize, source_file) != NULL) {
 		forward = 0;
 
-		printf("buffer = %s", buffer);
 		char* word;
 		/* Quebra o buffer em palavras separadas por espaços, além de ignorar
 		  as scape sequences de quebra de linha (\n) e do enter (\r) */
 		word = strtok(buffer," \n\r");
 
 		while (word != NULL && forward < MAXBUFFERLENGTH) {
-			printf("Palavra separada por espaços: %s\n", word);
-
 			t = getToken(word);
 			if (t != NULL && t->classification != NULL) {
 				if (t->attribute == NULL) {
@@ -380,29 +390,11 @@ void readFile() {
 				} else {
 					fprintf(destination_file, "<%s, %s>\n", t->classification, t->attribute);
 				}
-
-				printf("%s %s\n", t->classification, t->attribute);
 			}
 
 			word = strtok(NULL, " \n\r");
 		}
-
-//		while (buffer[forward] != '\n' && forward < MAXBUFFERLENGTH) {
-//
-//			t = getToken();
-//
-//			if (t != NULL && t->classification != NULL) {
-//				if (t->attribute == NULL) {
-//					fprintf(destination_file, "<%s>\n", t->classification);
-//				} else {
-//					fprintf(destination_file, "<%s, %s>\n", t->classification, t->attribute);
-//				}
-//			}
-//			printf("%s %s\n", t->classification, t->attribute);
-//
-//			begin = forward;
-//		}
-//		line++;
+		line++;
 	}
 }
 
@@ -420,11 +412,7 @@ int main() {
 
 	readFile();
 
-	for (i = 0; i < MAXVARIABLES; i++) {
-		if (variables[i][0] != '\0') {
-			printf("%s\n", variables[i]);
-		}
-	}
+	printf("Lexical analyzer finished on file %s", ARQSAIDA);
 
 	return 0;
 }
