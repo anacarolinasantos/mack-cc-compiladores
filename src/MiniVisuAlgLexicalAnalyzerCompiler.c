@@ -72,6 +72,9 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 	char * idNumber = (char *) malloc (31 * sizeof(char));
 	char * checkNumber = (char *) malloc (31 * sizeof(char));
 
+	token->classification = (char *) malloc (30 * sizeof(char));
+	token->attribute = (char *) malloc (30 * sizeof(char));
+
 	//Primeiramente verifica se é um número, caso seja, já retorna o token
 	num = atoi(splitString);
 	if (num != 0 || splitString[0] == '0') {
@@ -115,8 +118,8 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 		}
 
 		if (isANumber == 0) {
-			token->classification = "number";
-			token->attribute = splitString;
+			strcpy(token->classification, "number");
+			strcpy(token->attribute, splitString);
 		} else {
 			fprintf(destination_file, "Error symbol %s at line %d could not be resolved", splitString, line);
 			printf("Error symbol %s at line %d could not be resolved", splitString, line);
