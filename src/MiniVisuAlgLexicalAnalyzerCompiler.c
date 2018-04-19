@@ -66,7 +66,7 @@ void openFile(FILE **file, char fileName[], char type[]) {
 
 //Função que retorna qual o próximo caracter no buffer de entrada
 Token* getNumberVariableOrReservedWord(char* splitString){
-	Token *token = (Token *) calloc(255,sizeof(Token));
+	Token *token = (Token *) calloc(1,sizeof(Token));
 	int num, i = 0, isANumber = 0, isAVariable = 0;
 
 	char * idNumber = (char *) malloc (31 * sizeof(char));
@@ -90,6 +90,8 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 			printf("Error %s at line %d integer out of bounds.", splitString, line);
 			exit(1);
 		}
+
+		free(checkNumber);
 
 		for (i = 0; i < strlen(splitString); i++) {
 			/* Caso o caracter verificado seja 13 (que é o enter na tabela
@@ -115,7 +117,6 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 		if (isANumber == 0) {
 			token->classification = "number";
 			token->attribute = splitString;
-
 		} else {
 			fprintf(destination_file, "Error symbol %s at line %d could not be resolved", splitString, line);
 			printf("Error symbol %s at line %d could not be resolved", splitString, line);
@@ -251,6 +252,8 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 					break;
 				}
 			}
+
+			free(idNumber);
 		} else {
 			fprintf(destination_file, "Error symble %s at line %d could not be resolved", splitString, line);
 			printf("Error symble %s at line %d could not be resolved", splitString, line);
@@ -265,7 +268,7 @@ Token* getNumberVariableOrReservedWord(char* splitString){
 
 //Função que retorna o token da proxima string que foi lida do buffer de entrada
 Token* getToken(char* splitString) {
-	Token *token = (Token *) calloc(255,sizeof(Token));
+	Token *token = (Token *) calloc(1,sizeof(Token));
 
 	/* Caso esteja lendo uma string (esta variavel foi settada como verdadeira
 	  quando leu as primeiras aspas), então só vai parar de ler uma string quando
@@ -398,6 +401,8 @@ void readFile() {
 		}
 		line++;
 	}
+
+	free(t);
 }
 
 
