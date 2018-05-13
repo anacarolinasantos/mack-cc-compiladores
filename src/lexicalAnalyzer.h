@@ -1,4 +1,14 @@
 /*
+ * lexicalAnalyzer.h
+ *
+ *  Created on: May 13, 2018
+ *      Author: anacarolinasantos
+ */
+
+#ifndef LEXICALANALYZER_H_
+#define LEXICALANALYZER_H_
+
+/*
  ============================================================================
  Name        : MiniVisuAlgLexicalAnalyzerCompiler.c
  Author      : Ana Carolina dos Santos Silva, TIA: 31525962
@@ -426,3 +436,6 @@ int main() {
 
 	return 0;
 }
+
+
+#endif /* LEXICALANALYZER_H_ */
