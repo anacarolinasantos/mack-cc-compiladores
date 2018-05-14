@@ -37,7 +37,7 @@ static FILE *source_file, *destination_file;
 const size_t bufferSize = MAXTOKENAMOUNT;
 
 //Inicialização de variaveis estáticas que serão utilizadas em diversas funções do código
-static int forward = 0, line = 1, indexVariables = 0, allTokenSize = 0, forward = 0;
+static int forward = 0, line = 1, indexVariables = 0, allTokenSize = 0;
 
 //Declaração do buffer de entrada
 static char *buffer;
@@ -284,7 +284,7 @@ Token* getToken(char* splitString) {
 	 */
 	if (isStringLiteral == 1) {
 		if (splitString[0] == '"') {
-			strcpy(token->classification, "text");
+			strcpy(token->classification, "texto");
 			strcpy(token->attribute, "\0");
 			isStringLiteral = 0;
 		}
@@ -383,7 +383,8 @@ Token* getToken(char* splitString) {
 	return token;
 }
 
-//Função que 
+/* Função que lê o arquivo de entrada da linguagem MiniVisuAlg, chama a função
+  getToken(word), sendo word a palavra que acabou de ser lida para identificar qual é o token */
 void readProgramFile() {
 	int i = 0;
 
@@ -513,7 +514,7 @@ void sequenceVariableList() {
 	variableDeclarationSyntax();
     
     //Quando termina a declaração de variável, verifica se a próxima linha continua sendo declaração de variáveis, ou se já começa o início do programa
-    if (classificationMatch("id") == 1) {
+    if (tokenClassificationMatch("id") == 1) {
         //Caso seja mais uma declaração de variavel, chama a mesma função e faz de forma recursiva
 		sequenceVariableList();
 	}
@@ -557,7 +558,8 @@ void programSyntax() {
 	}
 }
 
-//Função que lê todo o arquivo de saida da análise léxica, salva todos os tokens na variável allTokens e chama a função programSyntax() para começar a fazer a análise sintática
+/* Função que lê o arquivo de saida da análise léxica, salva todos os tokens na variável allTokens
+  e chama a função programSyntax() para começar a fazer a análise sintática*/
 void readTokenFile() {
 	char* buffer = malloc(bufferSize);
 	int i = 0;
@@ -600,7 +602,7 @@ int main() {
 
     readProgramFile();
     
-    printf("Lexical analyzer finished on file %s", ARQSAIDA);
+    printf("Lexical analyzer finished on file %s\n\n", ARQSAIDA);
     
     //Fecha os arquivos, para abrir o arquivo de saída do analisador léxico com a opção de leitura de arquivo
     fclose(source_file);
