@@ -446,7 +446,7 @@ void readProgramFile() {
 //-------------- Funções da analise sintática --------------
 //Função que escreve o erro sintatico
 void syntaxError(char* expected, char* returned) {
-	printf("Erro: esperava %s e veio %s", expected, returned);
+	printf("Erro: esperava %s e veio %s, na linha %d", expected, returned, forward);
 	exit(1);
 }
 
@@ -502,7 +502,7 @@ void dataType() {
 }
 
 void factor() {
-    if ((strcmp(currentToken.classification, "id") != 0) || (strcmp(currentToken.classification, "number") != 0)) {
+    if ((strcmp(currentToken.classification, "id") != 0) && (strcmp(currentToken.classification, "number") != 0)) {
 		syntaxError("variavel ou numero", currentToken.classification);
     }
 }
@@ -512,6 +512,7 @@ void term() {
 }
 
 void simpleExpression() {
+	currentToken = getNextToken();
     if ((strcmp(currentToken.attribute, "PLUS") == 0) || (strcmp(currentToken.attribute, "MIN") == 0)) {
         term();
     }
@@ -525,6 +526,7 @@ void expression() {
 /* Regra de sintaxe de expressao de saida:
  texto | id | <expressao> */
 void expressionOutput() {
+	currentToken = getNextToken();
     if ((strcmp(currentToken.classification, "texto") != 0) && (strcmp(currentToken.classification, "id") != 0)) {
         expression();
     }
@@ -582,7 +584,9 @@ void sequenceVariableListSyntax() {
  | <id> <- <id>
  | <id> <- <expressao> */
 void allocationSyntax() {
+	currentToken = getNextToken();
 	if (strcmp(currentToken.classification, "attribution") == 0) {
+		currentToken = getNextToken();
 		if ((strcmp(currentToken.classification, "number") != 0) && (strcmp(currentToken.classification, "id") != 0)) {
 			expression();
 		}
