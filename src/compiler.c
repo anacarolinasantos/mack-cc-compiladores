@@ -7,6 +7,18 @@
  	 	 	   Ricardo Lima, TIA: 31417493
  	 	 	   Victor Zeronian Mattoso, TIA: 31461026
  ============================================================================
+
+  Referência Bibliográfica:
+ 	AHO, Alfred V. et al. Compilers Principles, Techniques, & Tools. 2. ed.: Pearson Education,
+ 	2007. p.64--66.
+
+ 	Compiler/lexical analyzer. Rosettacode.
+ 	Disponível em: <https://rosettacode.org/wiki/Compiler/lexical_analyzer>.
+ 	Acesso em: 5 Abril 2018.
+
+ 	Compiler/syntax analyzer. Rosettacode.
+  	Disponível em: <https://rosettacode.org/wiki/Compiler/syntax_analyzer>.
+ 	Acesso em: 2 Maio 2018.
  */
 
 //Inclusão das bibliotecas padrão, para limites de inteiros e para lidar com strings
