@@ -65,6 +65,28 @@ void openFile(FILE **file, char fileName[], char type[]) {
 	}
 }
 
+//Declaração de funçoes da análise léxica
+Token* getNumberVariableOrReservedWord(char* splitString);
+Token* getToken(char* splitString);
+void readProgramFile();
+
+//Declaração de funçoes da análise sintática
+void syntaxError(char* expected, char* returned);
+Token getNextToken();
+int tokenClassificationMatch(char* classificationExpected);
+int tokenMatch(char* classificationExpected, char* attributeExpected);
+void dataType();
+void variableListSyntax();
+void variableDeclarationSyntax();
+void sequenceVariableListSyntax();
+void selectionSyntax();
+void outputSyntax();
+void inputSyntax();
+void commandSyntax();
+void commandSequenceSyntax();
+void programSyntax();
+void readTokenFile();
+
 //-------------- Funções da analise léxica --------------
 //Função que retorna qual o próximo caracter no buffer de entrada
 Token* getNumberVariableOrReservedWord(char* splitString){
@@ -438,7 +460,7 @@ Token getNextToken() {
 	}
 
 	forward++;
-    
+
 	return allTokens[forward-1];
 }
 
@@ -479,6 +501,41 @@ void dataType() {
 	}
 }
 
+void factor() {
+    if ((strcmp(currentToken.classification, "id") != 0) || (strcmp(currentToken.classification, "number") != 0)) {
+		syntaxError("variavel ou numero", currentToken.classification);
+    }
+}
+
+void term() {
+    factor();
+}
+
+void simpleExpression() {
+    if ((strcmp(currentToken.attribute, "PLUS") == 0) || (strcmp(currentToken.attribute, "MIN") == 0)) {
+        term();
+    }
+    term();
+}
+
+void expression() {
+    simpleExpression();
+}
+
+/* Regra de sintaxe de expressao de saida:
+ texto | id | <expressao> */
+void expressionOutput() {
+    if ((strcmp(currentToken.classification, "texto") != 0) && (strcmp(currentToken.classification, "id") != 0)) {
+        expression();
+    }
+}
+
+/* Regra de sintaxe de lista de expressao de saida:
+ <expSaida> | <expSaida> + <listExpr> | <expSaida> , <listExpr> */
+void expressionListSyntax() {
+    expressionOutput();
+}
+
 /* Regra de sintaxe da lista de variáveis:
   <id> | <id>,<listaVar> */
 void variableListSyntax() {
@@ -496,8 +553,8 @@ void variableListSyntax() {
   <listaVar> : <tipo> */
 void variableDeclarationSyntax() {
 	//Chama a função de lista de variáveis
-    variableListSyntax();
-    
+	variableListSyntax();
+
 	currentToken = getNextToken();
 	if(strcmp(currentToken.attribute, "COL") == 0) {
 		currentToken = getNextToken();
@@ -509,15 +566,170 @@ void variableDeclarationSyntax() {
 
 /* Regra de sintaxe da sequência de declaração de variáveis:
   <decVar> | <decVar><seqDecVar> */
-void sequenceVariableList() {
-    //Chama a função de declaração de variaveis
+void sequenceVariableListSyntax() {
+	//Chama a função de declaração de variaveis
 	variableDeclarationSyntax();
-    
-    //Quando termina a declaração de variável, verifica se a próxima linha continua sendo declaração de variáveis, ou se já começa o início do programa
-    if (tokenClassificationMatch("id") == 1) {
-        //Caso seja mais uma declaração de variavel, chama a mesma função e faz de forma recursiva
-		sequenceVariableList();
+
+	//Quando termina a declaração de variável, verifica se a próxima linha continua sendo declaração de variáveis ou se já começa o início do programa
+	if (tokenClassificationMatch("id")) {
+		//Caso seja mais uma declaração de variavel, chama a mesma função e faz de forma recursiva
+		sequenceVariableListSyntax();
 	}
+}
+
+/* Regra de sintaxe de repetição enquanto:
+   <id> <- <number>
+ | <id> <- <id>
+ | <id> <- <expressao> */
+void allocationSyntax() {
+	if (strcmp(currentToken.classification, "attribution") == 0) {
+		if ((strcmp(currentToken.classification, "number") != 0) && (strcmp(currentToken.classification, "id") != 0)) {
+			expression();
+		}
+	} else {
+		syntaxError("attribution", currentToken.classification);
+	}
+}
+
+/* Regra de sintaxe de repetição enquanto:
+   enquanto <expLogica> faca <sequenciaComando> fimenquanto */
+void repetitionWhileSyntax() {
+	//TODO: chamar expressao logica
+	if (strcmp(currentToken.classification, "faca") == 0) {
+		commandSequenceSyntax();
+		if (strcmp(currentToken.classification, "fimenquanto") != 0) {
+			syntaxError("fimenquanto", currentToken.classification);
+		}
+	} else {
+		syntaxError("faca", currentToken.classification);
+	}
+}
+
+/* Regra de sintaxe de repetição para:
+   para <id> de <expressao> ate <expressao> faca <sequenciaComando> fimpara
+ | para <id> de <expressao> ate <expressao> passo <expressao> faca <sequenciaComando> fimpara */
+void repetitionForSyntax() {
+	currentToken = getNextToken();
+	if(strcmp(currentToken.classification, "id") == 0) {
+		currentToken = getNextToken();
+		if(strcmp(currentToken.classification, "de") == 0) {
+			expression();
+			currentToken = getNextToken();
+			if(strcmp(currentToken.classification, "ate") == 0) {
+				expression();
+				currentToken = getNextToken();
+				if(strcmp(currentToken.classification, "passo") == 0) {
+					expression();
+					currentToken = getNextToken();
+				}
+				if(strcmp(currentToken.classification, "faca") == 0) {
+					commandSequenceSyntax();
+					if(strcmp(currentToken.classification, "fimpara") != 0) {
+						syntaxError("fimpara", currentToken.classification);
+					}
+				} else {
+					syntaxError("faca", currentToken.classification);
+				}
+			} else {
+				syntaxError("ate", currentToken.classification);
+			}
+		} else {
+			syntaxError("de", currentToken.classification);
+		}
+	} else {
+		syntaxError("id", currentToken.classification);
+	}
+}
+
+/* Regra de sintaxe de seleção:
+   se <expLogica> entao <sequenciaComando> fimse
+ | se <expLogica> entao <sequenciaComando> senao <sequenciaComando> fimse */
+void selectionSyntax() {
+	//TODO: chamar expressao logica
+	currentToken = getNextToken();
+	if(strcmp(currentToken.classification, "entao") == 0) {
+		commandSequenceSyntax();
+		currentToken = getNextToken();
+		if (strcmp(currentToken.classification, "senao") == 0) {
+			commandSequenceSyntax();
+			currentToken = getNextToken();
+		}
+		if (strcmp(currentToken.classification, "fimse") != 0) {
+			syntaxError("fimse", currentToken.classification);
+		}
+	} else {
+		syntaxError("entao", currentToken.classification);
+	}
+}
+
+/* Regra de sintaxe de saida de dados:
+ escreva ( <listaExpr> ) */
+void outputSyntax() {
+	currentToken = getNextToken();
+	if(strcmp(currentToken.attribute, "OP") == 0) {
+		currentToken = getNextToken();
+		expressionListSyntax();
+		currentToken = getNextToken();
+		if(strcmp(currentToken.attribute, "CP") != 0) {
+			syntaxError("CP", currentToken.attribute);
+		}
+	} else {
+		syntaxError("OP", currentToken.attribute);
+	}
+}
+
+/* Regra de sintaxe de entrada de dados:
+ leia ( <listaVar> ) */
+void inputSyntax() {
+	currentToken = getNextToken();
+	if(strcmp(currentToken.attribute, "OP") == 0) {
+		currentToken = getNextToken();
+		variableListSyntax();
+		currentToken = getNextToken();
+		if(strcmp(currentToken.attribute, "CP") != 0) {
+			syntaxError("CP", currentToken.attribute);
+		}
+	} else {
+		syntaxError("OP", currentToken.attribute);
+	}
+}
+
+/* Regra de sintaxe de um comando:
+ <entrada> | <saida> | <selecao> | <rep_para> | <rep_enquanto> | <atribuicao> */
+void commandSyntax() {
+	currentToken = getNextToken();
+	if (strcmp(currentToken.classification, "leia") == 0) {
+		inputSyntax();
+	} else if (strcmp(currentToken.classification, "escreva") == 0) {
+		outputSyntax();
+	} else if (strcmp(currentToken.classification, "se") == 0) {
+		selectionSyntax();
+	} else if (strcmp(currentToken.classification, "para") == 0) {
+		repetitionForSyntax();
+	} else if (strcmp(currentToken.classification, "enquanto") == 0) {
+		repetitionWhileSyntax();
+	} else if (strcmp(currentToken.classification, "id") == 0) {
+		allocationSyntax();
+	} else {
+		syntaxError("entrada de dados, saida de dados, selecao, repeticao ou atribuicao", currentToken.classification);
+	}
+}
+
+
+/* Regra de sintaxe da sequência de comandos possíveis:
+ <comando> | <comando> <sequenciaComando> */
+void commandSequenceSyntax() {
+	commandSyntax();
+
+	//Quando termina o comando, verifica se a próxima linha é outro comando ou se é o final do programa ou final de um bloco de comando
+	if ((tokenClassificationMatch("leia"))
+		|| (tokenClassificationMatch("escreva"))
+		|| (tokenClassificationMatch("se"))
+		|| (tokenClassificationMatch("para"))
+		|| (tokenClassificationMatch("enquanto"))
+		|| (tokenClassificationMatch("id"))) {
+			commandSequenceSyntax();
+		}
 }
 
 /* Regra de sintaxe do começo do programa:
@@ -529,23 +741,17 @@ void programSyntax() {
 	currentToken = getNextToken();
 	if(strcmp(currentToken.classification, "algoritmo") == 0) {
 		currentToken = getNextToken();
-        
 		if(strcmp(currentToken.classification, "texto") == 0) {
-            currentToken = getNextToken();
-            
+			currentToken = getNextToken();
 			if (strcmp(currentToken.classification, "id") == 0) {
-                //Chama a função de sequencia de declaração de variáveis
-				sequenceVariableList();
+				//Chama a função de sequencia de declaração de variáveis
+				sequenceVariableListSyntax();
 				currentToken = getNextToken();
 			}
-
 			if(strcmp(currentToken.classification, "inicio") == 0) {
-
-				//TODO: chamar funcao de regra de bloco
-				if(strcmp(currentToken.classification, "fimalgoritmo") == 0) {
-					//TODO: chamar funcao de sucesso de analise sintatica
-				} else {
-					//TODO: colocar erro sintatico
+				commandSequenceSyntax();
+				if(strcmp(currentToken.classification, "fimalgoritmo") != 0) {
+					syntaxError("fimalgoritmo", currentToken.classification);
 				}
 			} else {
 				syntaxError("inicio", currentToken.classification);
@@ -590,30 +796,30 @@ void readTokenFile() {
 	}
 
 	allTokenSize = i;
-    
-    programSyntax();
+
+	programSyntax();
 	free(token);
 }
 
 int main() {
-    //Analisador léxico
+	//Analisador léxico
 	openFile(&source_file, ARQENTRADA, "r");
 	openFile(&destination_file, ARQSAIDA, "w");
 
-    readProgramFile();
-    
-    printf("Lexical analyzer finished on file %s\n\n", ARQSAIDA);
-    
-    //Fecha os arquivos, para abrir o arquivo de saída do analisador léxico com a opção de leitura de arquivo
-    fclose(source_file);
-    fclose(destination_file);
-    
-    //Começa o analisador sintátic
+	readProgramFile();
+
+	printf("Lexical analyzer finished on file %s\n\n", ARQSAIDA);
+
+	//Fecha os arquivos, para abrir o arquivo de saída do analisador léxico com a opção de leitura de arquivo
+	fclose(source_file);
+	fclose(destination_file);
+
+	//Começa o analisador sintátic
 	openFile(&destination_file, ARQSAIDA, "r");
-    
-    readTokenFile();
-    
-    printf("Syntax analyzer finished with success");
-    
+
+	readTokenFile();
+
+	printf("Syntax analyzer finished with success");
+
 	return 0;
 }
