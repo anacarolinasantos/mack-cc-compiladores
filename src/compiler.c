@@ -87,17 +87,8 @@ void syntaxError(char* expected, char* returned);
 Token getNextToken();
 int tokenClassificationMatch(char* classificationExpected);
 int tokenMatch(char* classificationExpected, char* attributeExpected);
-void dataType();
-void variableListSyntax();
-void variableDeclarationSyntax();
-void sequenceVariableListSyntax();
-void selectionSyntax();
-void outputSyntax();
-void inputSyntax();
-void commandSyntax();
+void expressionSyntax();
 void commandSequenceSyntax();
-void programSyntax();
-void readTokenFile();
 
 //-------------- Funções da analise léxica --------------
 //Função que retorna qual o próximo caracter no buffer de entrada
@@ -513,45 +504,8 @@ void dataType() {
 	}
 }
 
-void factor() {
-    if ((strcmp(currentToken.classification, "id") != 0) && (strcmp(currentToken.classification, "number") != 0)) {
-		syntaxError("variavel ou numero", currentToken.classification);
-    }
-}
-
-void term() {
-    factor();
-}
-
-void simpleExpression() {
-	currentToken = getNextToken();
-    if ((strcmp(currentToken.attribute, "PLUS") == 0) || (strcmp(currentToken.attribute, "MIN") == 0)) {
-        term();
-    }
-    term();
-}
-
-void expression() {
-    simpleExpression();
-}
-
-/* Regra de sintaxe de expressao de saida:
- texto | id | <expressao> */
-void expressionOutput() {
-	currentToken = getNextToken();
-    if ((strcmp(currentToken.classification, "texto") != 0) && (strcmp(currentToken.classification, "id") != 0)) {
-        expression();
-    }
-}
-
-/* Regra de sintaxe de lista de expressao de saida:
- <expSaida> | <expSaida> + <listExpr> | <expSaida> , <listExpr> */
-void expressionListSyntax() {
-    expressionOutput();
-}
-
 /* Regra de sintaxe da lista de variáveis:
-  <id> | <id>,<listaVar> */
+  <id> | <id> , <listaVar> */
 void variableListSyntax() {
 	if(strcmp(currentToken.classification, "id") == 0) {
 		if (tokenMatch("ponctuation", "COMMA")) {
@@ -560,6 +514,239 @@ void variableListSyntax() {
 		}
 	} else {
 		syntaxError("id", currentToken.classification);
+	}
+}
+
+/* Regra de sintaxe de fator:
+   <id> | <numero> | <logico> | <expressaoSimples> */
+void factorSyntax() {
+	currentToken = getNextToken();
+	if ((strcmp(currentToken.classification, "id") != 0)
+		&& (strcmp(currentToken.classification, "numero") != 0)
+		&& (strcmp(currentToken.classification, "verdadeiro") != 0)
+		&& (strcmp(currentToken.classification, "falso") != 0))  {
+		forward--;
+		expressionSyntax();
+	}
+}
+
+/* Regra de sintaxe de termo:
+   <fator>
+ | <fator> <operadorAritmetico> <termo> */
+void termSyntax() {
+	factorSyntax();
+	if (strcmp(currentToken.classification, "arith-op") == 0) {
+		termSyntax();
+	}
+}
+
+/* Regra de sintaxe da expressão simples:
+  <termo> | - <termo>
+| <termo> <operadorAritmetico> <termo> | - <termo> <operadorAritmetico> <termo> */
+void simpleExpressionSyntax() {
+	currentToken = getNextToken();
+	if (strcmp(currentToken.attribute, "MIN") != 0) {
+//		forward--;
+	}
+	termSyntax();
+	currentToken = getNextToken();
+	if (strcmp(currentToken.classification, "arith-op") == 0) {
+		termSyntax();
+	} else {
+		forward--;
+	}
+}
+
+/* Regra de sintaxe da expressão:
+  <expressaoSimples>
+| <expressaoSimples> (> | >= | < | <= | = | <> | e | ou) <expressaoSimples> */
+void expressionSyntax() {
+	simpleExpressionSyntax();
+	currentToken = getNextToken();
+	if (strcmp(currentToken.classification, "rel-op") == 0) {
+		simpleExpressionSyntax();
+	} else {
+		forward--;
+	}
+}
+
+	/* Regra de sintaxe de alocação:
+	  <id> <- <expressao> */
+	void allocationSyntax() {
+		currentToken = getNextToken();
+		if (strcmp(currentToken.classification, "attribution") == 0) {
+			expressionSyntax();
+		} else {
+			syntaxError("attribution", currentToken.classification);
+		}
+	}
+
+	/* Regra de sintaxe de repetição enquanto:
+	   enquanto <expressao> faca <sequenciaComando> fimenquanto */
+	void repetitionWhileSyntax() {
+		expressionSyntax();
+		if (strcmp(currentToken.classification, "faca") == 0) {
+			commandSequenceSyntax();
+			if (strcmp(currentToken.classification, "fimenquanto") != 0) {
+				syntaxError("fimenquanto", currentToken.classification);
+			}
+		} else {
+			syntaxError("faca", currentToken.classification);
+		}
+	}
+
+	/* Regra de sintaxe de repetição para:
+	   para <id> de <expressao> ate <expressao> faca <sequenciaComando> fimpara
+	 | para <id> de <expressao> ate <expressao> passo <expressao> faca <sequenciaComando> fimpara */
+	void repetitionForSyntax() {
+		currentToken = getNextToken();
+		if(strcmp(currentToken.classification, "id") == 0) {
+			currentToken = getNextToken();
+			if(strcmp(currentToken.classification, "de") == 0) {
+				expressionSyntax();
+				currentToken = getNextToken();
+				if(strcmp(currentToken.classification, "ate") == 0) {
+					expressionSyntax();
+					currentToken = getNextToken();
+					if(strcmp(currentToken.classification, "passo") == 0) {
+						expressionSyntax();
+						currentToken = getNextToken();
+					}
+					if(strcmp(currentToken.classification, "faca") == 0) {
+						commandSequenceSyntax();
+						if(strcmp(currentToken.classification, "fimpara") != 0) {
+							syntaxError("fimpara", currentToken.classification);
+						}
+					} else {
+						syntaxError("faca", currentToken.classification);
+					}
+				} else {
+					syntaxError("ate", currentToken.classification);
+				}
+			} else {
+				syntaxError("de", currentToken.classification);
+			}
+		} else {
+			syntaxError("id", currentToken.classification);
+		}
+	}
+
+	/* Regra de sintaxe de seleção:
+	   se <expressao> entao <sequenciaComando> fimse
+	 | se <expressao> entao <sequenciaComando> senao <sequenciaComando> fimse */
+	void selectionSyntax() {
+		expressionSyntax();
+		currentToken = getNextToken();
+		if(strcmp(currentToken.classification, "entao") == 0) {
+			commandSequenceSyntax();
+			currentToken = getNextToken();
+			if (strcmp(currentToken.classification, "senao") == 0) {
+				commandSequenceSyntax();
+				currentToken = getNextToken();
+			}
+			if (strcmp(currentToken.classification, "fimse") != 0) {
+				syntaxError("fimse", currentToken.classification);
+			}
+		} else {
+			syntaxError("entao", currentToken.classification);
+		}
+	}
+
+/* Regra de sintaxe de expressao de saida:
+ texto | id | <expressao> */
+void expressionOutput() {
+	currentToken = getNextToken();
+    if ((strcmp(currentToken.classification, "texto") != 0)
+    		&& (strcmp(currentToken.classification, "id") != 0)) {
+    		forward--;
+        expressionSyntax();
+    }
+}
+
+/* Regra de sintaxe de lista de expressao de saida:
+ <expSaida> | <expSaida> + <listExpr> | <expSaida> , <listExpr> */
+void expressionListSyntax() {
+    expressionOutput();
+    if ((strcmp(currentToken.attribute, "PLUS") == 0)
+    		|| (strcmp(currentToken.attribute, "COMMA") == 0))  {
+    		expressionListSyntax();
+    }
+}
+
+/* Regra de sintaxe de saida:
+  escreva ( <listaExpr> ) */
+void outputSyntax() {
+	currentToken = getNextToken();
+		if(strcmp(currentToken.attribute, "OP") == 0) {
+			currentToken = getNextToken();
+			expressionListSyntax();
+			currentToken = getNextToken();
+			if(strcmp(currentToken.attribute, "CP") != 0) {
+				syntaxError("CP", currentToken.attribute);
+			}
+		} else {
+			syntaxError("OP", currentToken.attribute);
+		}
+}
+
+/* Regra de sintaxe de entrada de dados:
+ leia ( <listaVar> ) */
+void inputSyntax() {
+	currentToken = getNextToken();
+	if(strcmp(currentToken.attribute, "OP") == 0) {
+		currentToken = getNextToken();
+		variableListSyntax();
+		currentToken = getNextToken();
+		if(strcmp(currentToken.attribute, "CP") != 0) {
+			syntaxError("CP", currentToken.attribute);
+		}
+	} else {
+		syntaxError("OP", currentToken.attribute);
+	}
+}
+
+/* Regra de sintaxe de um comando:
+ <entrada> | <saida> | <selecao> | <rep_para> | <rep_enquanto> | <atribuicao> */
+void commandSyntax() {
+	currentToken = getNextToken();
+	if (strcmp(currentToken.classification, "leia") == 0) {
+		printf("leia");
+		inputSyntax();
+	} else if (strcmp(currentToken.classification, "escreva") == 0) {
+		printf("escreva");
+		outputSyntax();
+	} else if (strcmp(currentToken.classification, "se") == 0) {
+		printf("se");
+		selectionSyntax();
+	} else if (strcmp(currentToken.classification, "para") == 0) {
+		printf("para");
+		repetitionForSyntax();
+	} else if (strcmp(currentToken.classification, "enquanto") == 0) {
+		printf("enquanto");
+		repetitionWhileSyntax();
+	} else if (strcmp(currentToken.classification, "id") == 0) {
+		printf("id");
+		allocationSyntax();
+	} else {
+		syntaxError("entrada de dados, saida de dados, selecao, repeticao ou atribuicao", currentToken.classification);
+	}
+}
+
+/* Regra de sintaxe da sequência de comandos possíveis:
+ <comando> | <comando> <sequenciaComando> */
+void commandSequenceSyntax() {
+	commandSyntax();
+
+	//Quando termina o comando, verifica se a próxima linha é outro comando ou se é o final do programa ou final de um bloco de comando
+	if ((tokenClassificationMatch("leia"))
+		|| (tokenClassificationMatch("escreva"))
+		|| (tokenClassificationMatch("se"))
+		|| (tokenClassificationMatch("para"))
+		|| (tokenClassificationMatch("enquanto"))
+		|| (tokenClassificationMatch("id"))) {
+		printf("tem sequencia\n");
+		forward--;
+		commandSequenceSyntax();
 	}
 }
 
@@ -589,163 +776,6 @@ void sequenceVariableListSyntax() {
 		//Caso seja mais uma declaração de variavel, chama a mesma função e faz de forma recursiva
 		sequenceVariableListSyntax();
 	}
-}
-
-/* Regra de sintaxe de repetição enquanto:
-   <id> <- <number>
- | <id> <- <id>
- | <id> <- <expressao> */
-void allocationSyntax() {
-	currentToken = getNextToken();
-	if (strcmp(currentToken.classification, "attribution") == 0) {
-		currentToken = getNextToken();
-		if ((strcmp(currentToken.classification, "number") != 0) && (strcmp(currentToken.classification, "id") != 0)) {
-			expression();
-		}
-	} else {
-		syntaxError("attribution", currentToken.classification);
-	}
-}
-
-/* Regra de sintaxe de repetição enquanto:
-   enquanto <expLogica> faca <sequenciaComando> fimenquanto */
-void repetitionWhileSyntax() {
-	//TODO: chamar expressao logica
-	if (strcmp(currentToken.classification, "faca") == 0) {
-		commandSequenceSyntax();
-		if (strcmp(currentToken.classification, "fimenquanto") != 0) {
-			syntaxError("fimenquanto", currentToken.classification);
-		}
-	} else {
-		syntaxError("faca", currentToken.classification);
-	}
-}
-
-/* Regra de sintaxe de repetição para:
-   para <id> de <expressao> ate <expressao> faca <sequenciaComando> fimpara
- | para <id> de <expressao> ate <expressao> passo <expressao> faca <sequenciaComando> fimpara */
-void repetitionForSyntax() {
-	currentToken = getNextToken();
-	if(strcmp(currentToken.classification, "id") == 0) {
-		currentToken = getNextToken();
-		if(strcmp(currentToken.classification, "de") == 0) {
-			expression();
-			currentToken = getNextToken();
-			if(strcmp(currentToken.classification, "ate") == 0) {
-				expression();
-				currentToken = getNextToken();
-				if(strcmp(currentToken.classification, "passo") == 0) {
-					expression();
-					currentToken = getNextToken();
-				}
-				if(strcmp(currentToken.classification, "faca") == 0) {
-					commandSequenceSyntax();
-					if(strcmp(currentToken.classification, "fimpara") != 0) {
-						syntaxError("fimpara", currentToken.classification);
-					}
-				} else {
-					syntaxError("faca", currentToken.classification);
-				}
-			} else {
-				syntaxError("ate", currentToken.classification);
-			}
-		} else {
-			syntaxError("de", currentToken.classification);
-		}
-	} else {
-		syntaxError("id", currentToken.classification);
-	}
-}
-
-/* Regra de sintaxe de seleção:
-   se <expLogica> entao <sequenciaComando> fimse
- | se <expLogica> entao <sequenciaComando> senao <sequenciaComando> fimse */
-void selectionSyntax() {
-	//TODO: chamar expressao logica
-	currentToken = getNextToken();
-	if(strcmp(currentToken.classification, "entao") == 0) {
-		commandSequenceSyntax();
-		currentToken = getNextToken();
-		if (strcmp(currentToken.classification, "senao") == 0) {
-			commandSequenceSyntax();
-			currentToken = getNextToken();
-		}
-		if (strcmp(currentToken.classification, "fimse") != 0) {
-			syntaxError("fimse", currentToken.classification);
-		}
-	} else {
-		syntaxError("entao", currentToken.classification);
-	}
-}
-
-/* Regra de sintaxe de saida de dados:
- escreva ( <listaExpr> ) */
-void outputSyntax() {
-	currentToken = getNextToken();
-	if(strcmp(currentToken.attribute, "OP") == 0) {
-		currentToken = getNextToken();
-		expressionListSyntax();
-		currentToken = getNextToken();
-		if(strcmp(currentToken.attribute, "CP") != 0) {
-			syntaxError("CP", currentToken.attribute);
-		}
-	} else {
-		syntaxError("OP", currentToken.attribute);
-	}
-}
-
-/* Regra de sintaxe de entrada de dados:
- leia ( <listaVar> ) */
-void inputSyntax() {
-	currentToken = getNextToken();
-	if(strcmp(currentToken.attribute, "OP") == 0) {
-		currentToken = getNextToken();
-		variableListSyntax();
-		currentToken = getNextToken();
-		if(strcmp(currentToken.attribute, "CP") != 0) {
-			syntaxError("CP", currentToken.attribute);
-		}
-	} else {
-		syntaxError("OP", currentToken.attribute);
-	}
-}
-
-/* Regra de sintaxe de um comando:
- <entrada> | <saida> | <selecao> | <rep_para> | <rep_enquanto> | <atribuicao> */
-void commandSyntax() {
-	currentToken = getNextToken();
-	if (strcmp(currentToken.classification, "leia") == 0) {
-		inputSyntax();
-	} else if (strcmp(currentToken.classification, "escreva") == 0) {
-		outputSyntax();
-	} else if (strcmp(currentToken.classification, "se") == 0) {
-		selectionSyntax();
-	} else if (strcmp(currentToken.classification, "para") == 0) {
-		repetitionForSyntax();
-	} else if (strcmp(currentToken.classification, "enquanto") == 0) {
-		repetitionWhileSyntax();
-	} else if (strcmp(currentToken.classification, "id") == 0) {
-		allocationSyntax();
-	} else {
-		syntaxError("entrada de dados, saida de dados, selecao, repeticao ou atribuicao", currentToken.classification);
-	}
-}
-
-
-/* Regra de sintaxe da sequência de comandos possíveis:
- <comando> | <comando> <sequenciaComando> */
-void commandSequenceSyntax() {
-	commandSyntax();
-
-	//Quando termina o comando, verifica se a próxima linha é outro comando ou se é o final do programa ou final de um bloco de comando
-	if ((tokenClassificationMatch("leia"))
-		|| (tokenClassificationMatch("escreva"))
-		|| (tokenClassificationMatch("se"))
-		|| (tokenClassificationMatch("para"))
-		|| (tokenClassificationMatch("enquanto"))
-		|| (tokenClassificationMatch("id"))) {
-			commandSequenceSyntax();
-		}
 }
 
 /* Regra de sintaxe do começo do programa:
@@ -790,6 +820,9 @@ void readTokenFile() {
 	token->classification = (char *) calloc (30, sizeof(char));
 	token->attribute = (char *) calloc (30, sizeof(char));
 
+
+	printf("esta aqui");
+
 	while (fgets(buffer, bufferSize, destination_file) != NULL) {
 		allTokens[i].classification = (char *) calloc (30, sizeof(char));
 		allTokens[i].attribute = (char *) calloc (30, sizeof(char));
@@ -813,6 +846,8 @@ void readTokenFile() {
 
 	allTokenSize = i;
 
+	printf("leu tudo");
+
 	programSyntax();
 	free(token);
 }
@@ -830,7 +865,7 @@ int main() {
 	fclose(source_file);
 	fclose(destination_file);
 
-	//Começa o analisador sintátic
+	//Começa o analisador sintático
 	openFile(&destination_file, ARQSAIDA, "r");
 
 	readTokenFile();
